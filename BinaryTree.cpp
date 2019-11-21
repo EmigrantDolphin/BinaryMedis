@@ -1,7 +1,5 @@
 #include <iostream>
 #include <vector>
-#include <string>
-#include <cmath>
 
 using namespace std;
 
@@ -18,15 +16,15 @@ struct Node{
 	}
 };
 
-void AddValue(Node *root, int value);
-void RemoveValue(Node *root, int value);
-Node *FindValue(Node *root, int value);
-int GetHeight(Node *root);
-void PrintTree(Node *root);
+void AddValue(Node *node, int value);
+void RemoveValue(Node *&node, int value);  //Without & pointer is passed by value. I need reference because I set it to null if root is deleted
+Node *FindValue(Node *node, int value);
+int GetHeight(Node *node);
+void PrintTree(Node *node);
 
-void LNR(Node *root, vector<int> &value);
-Node *GetRightMostNode(Node *root);
-Node *GetLeftMostNode(Node *root);
+void LNR(Node *node, vector<int> &value);
+Node *GetRightMostNode(Node *node);
+Node *GetLeftMostNode(Node *node);
 
 int main(){
 
@@ -62,7 +60,7 @@ int main(){
 				break;
 			case 2:
 				{
-					printf("Iveskite elemento reiksme istrinimui");
+					printf("Iveskite elemento reiksme istrinimui\n");
 					int value;
 					cin >> value;
 					system("cls");
@@ -86,7 +84,9 @@ int main(){
 				cout << GetHeight(root) << endl << endl;
 				break;
 			case 5:
-				PrintTree(root);
+				if (root != null){
+					PrintTree(root);
+				}
 				break;
 			case 6:
 				closing = true;
@@ -100,182 +100,158 @@ int main(){
 	return 0;
 }
 
-void AddValue(Node *root, int value){
-	if (root->Value == value){
+void AddValue(Node *node, int value){
+	if (node->Value == value){
 		printf("Verte %i jau egzistuoja\n\n", value);
 		return;
 	}
-	if (value < root->Value){
-		if (root->LeftChild == null){
-			root->LeftChild = new Node(value);
-			root->LeftChild->Parent = root;
+	if (value < node->Value){
+		if (node->LeftChild == null){
+			node->LeftChild = new Node(value);
+			node->LeftChild->Parent = node;
 		}
 		else
-			AddValue(root->LeftChild, value);
+			AddValue(node->LeftChild, value);
 	}
-	if (value > root->Value){
-		if (root->RightChild == null){
-			root->RightChild = new Node(value);
-			root->RightChild->Parent = root;
+	if (value > node->Value){
+		if (node->RightChild == null){
+			node->RightChild = new Node(value);
+			node->RightChild->Parent = node;
 		}
 		else
-			AddValue(root->RightChild, value);
+			AddValue(node->RightChild, value);
 	}
 }
-void RemoveValue(Node *root, int value){
-	if (value > root->Value){
-		printf("AA");
-		RemoveValue(root->RightChild, value);
+void RemoveValue(Node *&node, int value){
+	if (value > node->Value){
+		RemoveValue(node->RightChild, value);
 		return;
 	}
-	if (value < root->Value){
-		printf("BB");
-		RemoveValue(root->LeftChild, value);
+	if (value < node->Value){
+		RemoveValue(node->LeftChild, value);
 		return;
 	}
 
-	if (value == root->Value){
-		if (root->LeftChild == null && root->RightChild == null){ // lapas
-			if (root->Parent != null){
-				if (root->Parent->LeftChild != null && root->Value == root->Parent->LeftChild->Value)
-					root->Parent->LeftChild = null;			
-				else if (root->Parent->RightChild != null && root->Value == root->Parent->RightChild->Value)
-					root->Parent->RightChild = null;
+	if (value == node->Value){
+		if (node->LeftChild == null && node->RightChild == null){ // lapas
+			if (node->Parent != null){
+				if (node->Parent->LeftChild != null && node->Value == node->Parent->LeftChild->Value)
+					node->Parent->LeftChild = null;			
+				else if (node->Parent->RightChild != null && node->Value == node->Parent->RightChild->Value)
+					node->Parent->RightChild = null;
+				delete node;
+			}else{
+				node = null;
 			}
-			delete root;
 			return;
 		}
 		
-		if (root->LeftChild != null && root->RightChild == null){ // turi kairi pomedi
-			if (root->Parent != null){
-				if (root->Parent->LeftChild != null && root->Value == root->Parent->LeftChild->Value){
-					root->Parent->LeftChild = root->LeftChild;			
-					root->LeftChild->Parent = root->Parent;
+		if (node->LeftChild != null && node->RightChild == null){ // turi kairi pomedi
+			if (node->Parent != null){
+				if (node->Parent->LeftChild != null && node->Value == node->Parent->LeftChild->Value){
+					node->Parent->LeftChild = node->LeftChild;			
+					node->LeftChild->Parent = node->Parent;
 				}
-				else if (root->Parent->RightChild != null && root->Value == root->Parent->RightChild->Value){
-					root->Parent->RightChild = root->LeftChild;
-					root->LeftChild->Parent = root->Parent;
+				else if (node->Parent->RightChild != null && node->Value == node->Parent->RightChild->Value){
+					node->Parent->RightChild = node->LeftChild;
+					node->LeftChild->Parent = node->Parent;
 				}
-				delete root;
+				delete node;
 			}else{
-				root = root->LeftChild;
+				node = node->LeftChild;
+				node->Parent = null;
 			}		
 			return;		
 		}
 		
-		if (root->LeftChild == null && root->RightChild != null){ // turi desni pomedi
-			if (root->Parent != null){
-				if (root->Parent->LeftChild != null && root->Value == root->Parent->LeftChild->Value){
-					root->Parent->LeftChild = root->RightChild;			
-					root->RightChild->Parent = root->Parent;
+		if (node->LeftChild == null && node->RightChild != null){ // turi desni pomedi
+			if (node->Parent != null){
+				if (node->Parent->LeftChild != null && node->Value == node->Parent->LeftChild->Value){
+					node->Parent->LeftChild = node->RightChild;			
+					node->RightChild->Parent = node->Parent;
 				}
-				else if (root->Parent->RightChild != null && root->Value == root->Parent->RightChild->Value){
-					root->Parent->RightChild = root->RightChild;
-					root->RightChild->Parent = root->Parent;
+				else if (node->Parent->RightChild != null && node->Value == node->Parent->RightChild->Value){
+					node->Parent->RightChild = node->RightChild;
+					node->RightChild->Parent = node->Parent;
 				}
-				delete root;
+				delete node;
 			}else{
-				root = root->RightChild;
+				node = node->RightChild;
+				node->Parent = null;
 			}
 			return;
 		}
 		
-		if (root->LeftChild != null && root->RightChild != null){ // turi abu pomedzius
-			if (root->Parent != null){
-				if (root->Parent->RightChild != null && root->Parent->RightChild->Value == root->Value){ // jei desinysis pomedis
-					Node *leftMostNode = GetLeftMostNode(root->RightChild);
-					leftMostNode->Parent->LeftChild = null;
-					leftMostNode->Parent = root->Parent;
-					leftMostNode->LeftChild = root->LeftChild;
-					leftMostNode->RightChild = root->RightChild;
-					root->Parent->RightChild = leftMostNode;
-					if (root->LeftChild != null)
-						root->LeftChild->Parent = leftMostNode;
-					if (root->RightChild != null)
-						root->RightChild->Parent = leftMostNode;
-					delete root;
-				}
+		if (node->LeftChild != null && node->RightChild != null){ // turi abu pomedzius
+			if (node->Parent != null){
 				
-				if (root->Parent->LeftChild != null && root->Parent->LeftChild->Value == root->Value){ // jei kairysis pomedis
-					Node *rightMostNode = GetRightMostNode(root->LeftChild);
-					rightMostNode->Parent->RightChild = null;
-					rightMostNode->Parent = root->Parent;
-					rightMostNode->LeftChild = root->LeftChild;
-					rightMostNode->RightChild = root->RightChild;
-					root->Parent->LeftChild = rightMostNode;
-					if (root->LeftChild != null)
-						root->LeftChild->Parent = rightMostNode;
-					if (root->RightChild != null)
-						root->RightChild->Parent = rightMostNode;
-					delete root;
-				}
 			}
 		}
 		
 	}
 }
-Node *FindValue(Node *root, int value){
+Node *FindValue(Node *node, int value){
 	Node *foundNode = null;
-	if (root->LeftChild != null && value < root->Value)
-		foundNode = FindValue(root->LeftChild, value);
-	else if (root->RightChild != null && value > root->Value)
-		foundNode = FindValue(root->RightChild, value);
-	else if (value == root->Value)
-		return root;
+	if (node->LeftChild != null && value < node->Value)
+		foundNode = FindValue(node->LeftChild, value);
+	else if (node->RightChild != null && value > node->Value)
+		foundNode = FindValue(node->RightChild, value);
+	else if (value == node->Value)
+		return node;
 	
 	return foundNode;
 }
-int GetHeight(Node *root){
+int GetHeight(Node *node){
 	int leftHeight = 0;
 	int rightHeight = 0;
 	
-	if (root->LeftChild != null)
-		leftHeight = GetHeight(root->LeftChild) + 1;
+	if (node->LeftChild != null)
+		leftHeight = GetHeight(node->LeftChild) + 1;
 	else
 		leftHeight = 1;
 	
-	if (root->RightChild != null)
-		rightHeight = GetHeight(root->RightChild) + 1;
+	if (node->RightChild != null)
+		rightHeight = GetHeight(node->RightChild) + 1;
 	else
 		rightHeight = 1;
 	
 	return leftHeight > rightHeight ? leftHeight : rightHeight;
 }
-void PrintTree(Node *root){
+void PrintTree(Node *node){
 	vector<int> values;
-	LNR(root, values);
+	LNR(node, values);
 	printf("KVD {");
 	for (int i = 0; i < values.size()-1; i++)
 		printf(" %i,",values[i]);
 	printf(" %i }\n\n", values[values.size()-1]);
 }
 
-void LNR(Node *root, vector<int> &values){ // KVD masyvas
-	if (root->LeftChild != null)
-		LNR(root->LeftChild, values);
-	if (root->RightChild != null)
-		LNR(root->RightChild, values);
+void LNR(Node *node, vector<int> &values){ // KVD masyvas
+	if (node->LeftChild != null)
+		LNR(node->LeftChild, values);
+	if (node->RightChild != null)
+		LNR(node->RightChild, values);
 	
-	values.push_back(root->Value);
+	values.push_back(node->Value);
 	return;	
 }
 
-Node *GetRightMostNode(Node *root){
+Node *GetRightMostNode(Node *node){
 	Node *rightMost;
-	if (root->RightChild != null)
-		rightMost = GetRightMostNode(root->RightChild);
+	if (node->RightChild != null)
+		rightMost = GetRightMostNode(node->RightChild);
 	else
-		return root;
+		return node;
 	
 	return rightMost;
 }
 
-Node *GetLeftMostNode(Node *root){
+Node *GetLeftMostNode(Node *node){
 	Node *leftMost;
-	if (root->RightChild != null)
-		leftMost = GetRightMostNode(root->LeftChild);
+	if (node->RightChild != null)
+		leftMost = GetRightMostNode(node->LeftChild);
 	else
-		return root;
+		return node;
 	
 	return leftMost;
 }
