@@ -96,7 +96,6 @@ int main(){
 		
 	}
 
-
 	return 0;
 }
 
@@ -122,13 +121,16 @@ void AddValue(Node *node, int value){
 			AddValue(node->RightChild, value);
 	}
 }
+
 void RemoveValue(Node *&node, int value){
 	if (value > node->Value){
-		RemoveValue(node->RightChild, value);
+		if (node->RightChild != null)
+			RemoveValue(node->RightChild, value);
 		return;
 	}
 	if (value < node->Value){
-		RemoveValue(node->LeftChild, value);
+		if (node->LeftChild != null)
+			RemoveValue(node->LeftChild, value);
 		return;
 	}
 
@@ -148,15 +150,13 @@ void RemoveValue(Node *&node, int value){
 		
 		if (node->LeftChild != null && node->RightChild == null){ // turi kairi pomedi
 			if (node->Parent != null){
-				if (node->Parent->LeftChild != null && node->Value == node->Parent->LeftChild->Value){
+				node->LeftChild->Parent = node->Parent;
+				
+				if (node->Parent->LeftChild != null && node->Value == node->Parent->LeftChild->Value)
 					node->Parent->LeftChild = node->LeftChild;			
-					node->LeftChild->Parent = node->Parent;
-				}
-				else if (node->Parent->RightChild != null && node->Value == node->Parent->RightChild->Value){
+				else if (node->Parent->RightChild != null && node->Value == node->Parent->RightChild->Value)
 					node->Parent->RightChild = node->LeftChild;
-					node->LeftChild->Parent = node->Parent;
-				}
-				delete node;
+
 			}else{
 				node = node->LeftChild;
 				node->Parent = null;
@@ -164,17 +164,15 @@ void RemoveValue(Node *&node, int value){
 			return;		
 		}
 		
-		if (node->LeftChild == null && node->RightChild != null){ // turi desni pomedi
+		if (node->RightChild != null && node->LeftChild == null){ // turi desni pomedi
 			if (node->Parent != null){
-				if (node->Parent->LeftChild != null && node->Value == node->Parent->LeftChild->Value){
-					node->Parent->LeftChild = node->RightChild;			
-					node->RightChild->Parent = node->Parent;
-				}
-				else if (node->Parent->RightChild != null && node->Value == node->Parent->RightChild->Value){
+				node->RightChild->Parent = node->Parent;
+				
+				if (node->Parent->LeftChild != null && node->Value == node->Parent->LeftChild->Value)
+					node->Parent->LeftChild = node->RightChild;							
+				else if (node->Parent->RightChild != null && node->Value == node->Parent->RightChild->Value)
 					node->Parent->RightChild = node->RightChild;
-					node->RightChild->Parent = node->Parent;
-				}
-				delete node;
+
 			}else{
 				node = node->RightChild;
 				node->Parent = null;
@@ -182,9 +180,33 @@ void RemoveValue(Node *&node, int value){
 			return;
 		}
 		
-		if (node->LeftChild != null && node->RightChild != null){ // turi abu pomedzius
-			if (node->Parent != null){
-				
+		if (node->LeftChild != null && node->RightChild != null){                                        // turi abu pomedzius
+			if (node->Parent != null){ // virsune nera saknis
+				if (node->Parent->RightChild != null && node->Parent->RightChild->Value == node->Value){ // virsune desiniajame pomedyje
+					Node *lowestValueNode = GetLeftMostNode(node->RightChild);                           // gaunama desniojo pomedzio maziausia virsune
+					node->Value = lowestValueNode->Value;
+					if (node->RightChild->Value == lowestValueNode->Value)
+						node->RightChild = null;
+					else
+						lowestValueNode->Parent->LeftChild = null;
+					
+					delete lowestValueNode;
+
+				}else if (node->Parent->LeftChild != null && node->Parent->LeftChild->Value == node->Value){ // virsune kairiajame pomedyje
+					Node *highestValueNode = GetRightMostNode(node->LeftChild);                              // gaunama kairiojo pomedzio didziausioji virsune
+					node->Value = highestValueNode->Value;
+					
+					if (node->LeftChild->Value == highestValueNode->Value)
+						node->LeftChild = null;
+					else
+						highestValueNode->Parent->RightChild = null;
+	
+					delete highestValueNode;
+				}				
+			}else{ // jei saknis turi du vaikus
+				node->Value = node->RightChild->Value;
+				delete node->RightChild;
+				node->RightChild = null;
 			}
 		}
 		
@@ -248,7 +270,7 @@ Node *GetRightMostNode(Node *node){
 
 Node *GetLeftMostNode(Node *node){
 	Node *leftMost;
-	if (node->RightChild != null)
+	if (node->LeftChild != null)
 		leftMost = GetRightMostNode(node->LeftChild);
 	else
 		return node;
