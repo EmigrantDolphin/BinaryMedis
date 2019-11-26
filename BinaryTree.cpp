@@ -33,8 +33,9 @@ int main(){
 	
 	while(!closing){
 		
-		int choice = 0;
+		int choice = -1;
 		
+		printf("0. Pateikti skaiciu aibe\n");
 		printf("1. Prideti elementa\n");
 		printf("2. Pasalinti elementa\n");
 		printf("3. Surasti elementa\n");
@@ -46,6 +47,28 @@ int main(){
 		system("cls");
 		
 		switch (choice){
+			case 0:
+				{
+					char input[100];
+					string num="";
+					printf("Iveskite skaiciu aibe atskirta tarpais\n");
+					cin.ignore();
+					cin.getline(input, sizeof(input));
+					for (int i = 0; i < sizeof(input); i++) {
+						if (input[i] != ' ') num += input[i];
+						else if (root == null) {
+							root = new Node(atoi(num.c_str()));
+							num = "";
+						}
+						else {
+							AddValue(root, atoi(num.c_str()));
+							num = "";
+						}
+					}
+					AddValue(root, atoi(num.c_str()));
+					system("cls");
+				}
+				break;
 			case 1:
 				{
 					printf("Iveskite elemento reiksme (-99 iki 999)\n");
