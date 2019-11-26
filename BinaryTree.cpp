@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <cmath>
+#include <string>
 
 using namespace std;
 
@@ -11,6 +13,8 @@ struct Node{
 	Node *RightChild = null;
 	int Value = 0;
 	int Level = 0;
+	int PosX = -1;
+	int PosY = -1;
 	Node(int value){
 		this->Value = value;
 	}
@@ -21,8 +25,10 @@ void RemoveValue(Node *&node, int value);  //Without & pointer is passed by valu
 Node *FindValue(Node *node, int value);
 int GetHeight(Node *node);
 void PrintTree(Node *node);
+void SetPositions(Node *node, vector<int> distFromParent, vector<vector<string>> &drawnTree);
+void CalculateLevels(Node *node);
 
-void LNR(Node *node, vector<int> &value);
+void LRN(Node *node, vector<int> &value);
 Node *GetRightMostNode(Node *node);
 Node *GetLeftMostNode(Node *node);
 
@@ -67,6 +73,7 @@ int main(){
 					}
 					AddValue(root, atoi(num.c_str()));
 					system("cls");
+					PrintTree(root);
 				}
 				break;
 			case 1:
@@ -79,6 +86,7 @@ int main(){
 						root = new Node(value);
 					else
 						AddValue(root, value);
+					PrintTree(root);
 				}
 				break;
 			case 2:
@@ -88,6 +96,7 @@ int main(){
 					cin >> value;
 					system("cls");
 					RemoveValue(root, value);
+					PrintTree(root);
 				}
 				break;
 			case 3:
@@ -104,12 +113,13 @@ int main(){
 				}
 				break;
 			case 4:
-				cout << GetHeight(root) << endl << endl;
+				PrintTree(root);
+				cout << "Aukstis: " << GetHeight(root) << endl << endl;
 				break;
 			case 5:
-				if (root != null){
-					PrintTree(root);
-				}
+				
+				PrintTree(root);
+				
 				break;
 			case 6:
 				closing = true;
@@ -146,6 +156,8 @@ void AddValue(Node *node, int value){
 }
 
 void RemoveValue(Node *&node, int value){
+	if (node == null)
+		return;
 	if (value > node->Value){
 		if (node->RightChild != null)
 			RemoveValue(node->RightChild, value);
@@ -235,7 +247,10 @@ void RemoveValue(Node *&node, int value){
 		
 	}
 }
+
 Node *FindValue(Node *node, int value){
+	if (node == null)
+		return null;
 	Node *foundNode = null;
 	if (node->LeftChild != null && value < node->Value)
 		foundNode = FindValue(node->LeftChild, value);
@@ -246,7 +261,10 @@ Node *FindValue(Node *node, int value){
 	
 	return foundNode;
 }
+
 int GetHeight(Node *node){
+	if (node == null)
+		return 0;
 	int leftHeight = 0;
 	int rightHeight = 0;
 	
@@ -262,20 +280,74 @@ int GetHeight(Node *node){
 	
 	return leftHeight > rightHeight ? leftHeight : rightHeight;
 }
-void PrintTree(Node *node){
-	vector<int> values;
-	LNR(node, values);
-	printf("KVD {");
-	for (int i = 0; i < values.size()-1; i++)
-		printf(" %i,",values[i]);
-	printf(" %i }\n\n", values[values.size()-1]);
+
+void PrintTree(Node *root){
+	if (root == null)
+		return;
+	int maxNumLength = 3;
+	int treeHeight = GetHeight(root);
+	int treeWidth = ((pow(2, treeHeight-1) * 2 )-1 ) * maxNumLength; // poziciju kiekis x asyje
+	root->PosX = (pow(2, treeHeight-1) -1 ) * maxNumLength;
+	root->PosY = 0;
+	vector<int> distanceFromParent;
+	distanceFromParent.push_back(root->PosX);
+	for (int i = 1; i < treeHeight; i++) 
+		distanceFromParent.push_back(distanceFromParent[i-1] / 2); // atstumas tarp virsuniu ant skirtingu lygiu 
+	for (int i = 1; i < treeHeight; i++)
+		distanceFromParent[i] += 1;                                // atstumas nuo tevo 
+	
+	vector<vector<string>> drawnTree(treeHeight, vector<string> (treeWidth)); //drawnTree[y][x] , kur y dideja zemyn
+	for (int i = 0; i < treeHeight; i++)
+		for (int j = 0; j < treeWidth; j++)
+			drawnTree[i][j] = ".";
+	drawnTree[root->PosY][root->PosX] = to_string(root->Value);
+	
+	
+	root->Level = 0;
+	CalculateLevels(root);
+	if (root->LeftChild != null)
+		SetPositions(root->LeftChild, distanceFromParent, drawnTree);
+	if (root->RightChild != null)
+		SetPositions(root->RightChild, distanceFromParent, drawnTree);
+	
+	for (int i = 0; i < treeHeight; i++){
+		for (int j = 0; j < treeWidth; j++)
+			cout << drawnTree[i][j];
+		cout << endl;
+	}
 }
 
-void LNR(Node *node, vector<int> &values){ // KVD masyvas
+void SetPositions(Node *node, vector<int> distFromParent, vector<vector<string>> &drawnTree){
+	if (node->Parent->LeftChild != null && node->Parent->LeftChild->Value == node->Value) // kairysis
+		node->PosX = node->Parent->PosX - distFromParent[node->Level];
+	else if (node->Parent->RightChild != null && node->Parent->RightChild->Value == node->Value) //desinysis
+		node->PosX = node->Parent->PosX + distFromParent[node->Level];
+		
+	node->PosY = node->Level;
+	
+	drawnTree[node->PosY][node->PosX] = to_string(node->Value);
+	
 	if (node->LeftChild != null)
-		LNR(node->LeftChild, values);
+		SetPositions(node->LeftChild, distFromParent, drawnTree);
 	if (node->RightChild != null)
-		LNR(node->RightChild, values);
+		SetPositions(node->RightChild, distFromParent, drawnTree);
+	
+}
+
+void CalculateLevels(Node* node){
+	if (node->Parent != null)
+		node->Level = node->Parent->Level + 1;
+	if (node->RightChild != null)
+		CalculateLevels(node->RightChild);
+	if (node->LeftChild != null)
+		CalculateLevels(node->LeftChild);
+}
+
+void LRN(Node *node, vector<int> &values){ // KDV masyvas
+	if (node->LeftChild != null)
+		LRN(node->LeftChild, values); 
+	if (node->RightChild != null)
+		LRN(node->RightChild, values);
 	
 	values.push_back(node->Value);
 	return;	
