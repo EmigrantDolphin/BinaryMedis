@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <string>
+#include <fstream>
 
 using namespace std;
 
@@ -20,7 +21,7 @@ struct Node{
 	}
 };
 
-void AddValue(Node *node, int value);
+void AddValue(Node *&node, int value);
 void RemoveValue(Node *&node, int value);  //Without & pointer is passed by value. I need reference because I set it to null if root is deleted
 Node *FindValue(Node *node, int value);
 int GetHeight(Node *node);
@@ -55,23 +56,35 @@ int main(){
 		switch (choice){
 			case 0:
 				{
-					char input[100];
-					string num="";
-					printf("Iveskite skaiciu aibe atskirta tarpais\n");
-					cin.ignore();
-					cin.getline(input, sizeof(input));
-					for (int i = 0; i < sizeof(input); i++) {
-						if (input[i] != ' ') num += input[i];
-						else if (root == null) {
-							root = new Node(atoi(num.c_str()));
-							num = "";
-						}
-						else {
+					choice = -1;
+					string input;
+					string num = "";			
+					printf("1.Ivesti skaiciu aibe klaviatura \n");
+					printf("2.Nuskaityti skaiciu aibe is failo 'duom.txt' \n");
+					cin >> choice;
+					system("cls");
+					if (choice == 1) {
+						printf("Iveskite skaiciu aibe atskirta tarpais\n");
+						cin.ignore();
+						getline(cin, input);
+					}else {
+						fstream fs("duom.txt", ios::in);
+						fs >> noskipws;
+						char c;
+						while (fs >> c) 
+							input.push_back(c);
+						fs.close();
+					}
+					for (int i = 0; i < input.size(); i++) {
+						if (input[i] != ' ')
+							num += input[i];
+						else if (num.size() != 0) {
 							AddValue(root, atoi(num.c_str()));
 							num = "";
 						}
 					}
-					AddValue(root, atoi(num.c_str()));
+					if (num.size() != 0)
+						AddValue(root, atoi(num.c_str()));
 					system("cls");
 					PrintTree(root);
 				}
@@ -132,21 +145,25 @@ int main(){
 	return 0;
 }
 
-void AddValue(Node *node, int value){
-	if (node->Value == value){
+void AddValue(Node *&node, int value) {
+	if (node == null) {
+		*&node = new Node(value);
+		return;
+	}
+	if (node->Value == value) {
 		printf("Verte %i jau egzistuoja\n\n", value);
 		return;
 	}
-	if (value < node->Value){
-		if (node->LeftChild == null){
+	if (value < node->Value) {
+		if (node->LeftChild == null) {
 			node->LeftChild = new Node(value);
 			node->LeftChild->Parent = node;
 		}
 		else
 			AddValue(node->LeftChild, value);
 	}
-	if (value > node->Value){
-		if (node->RightChild == null){
+	if (value > node->Value) {
+		if (node->RightChild == null) {
 			node->RightChild = new Node(value);
 			node->RightChild->Parent = node;
 		}
