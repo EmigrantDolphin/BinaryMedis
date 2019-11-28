@@ -298,40 +298,44 @@ int GetHeight(Node *node){
 	return leftHeight > rightHeight ? leftHeight : rightHeight;
 }
 
-void PrintTree(Node *root){
+void PrintTree(Node *root) {
 	if (root == null)
 		return;
 	int maxNumLength = 3;
 	int treeHeight = GetHeight(root);
-	int treeWidth = ((pow(2, treeHeight-1) * 2 )-1 ) * maxNumLength; // poziciju kiekis x asyje
-	root->PosX = (pow(2, treeHeight-1) -1 ) * maxNumLength;
+	int treeWidth = ((pow(2, treeHeight - 1) * 2) - 1) * maxNumLength; // poziciju kiekis x asyje
+	root->PosX = (pow(2, treeHeight - 1) - 1) * maxNumLength;
 	root->PosY = 0;
 	vector<int> distanceFromParent;
 	distanceFromParent.push_back(root->PosX);
-	for (int i = 1; i < treeHeight; i++) 
-		distanceFromParent.push_back(distanceFromParent[i-1] / 2); // atstumas tarp virsuniu ant skirtingu lygiu 
+	for (int i = 1; i < treeHeight; i++)
+		distanceFromParent.push_back(distanceFromParent[i - 1] / 2); // atstumas tarp virsuniu ant skirtingu lygiu 
 	for (int i = 1; i < treeHeight; i++)
 		distanceFromParent[i] += 1;                                // atstumas nuo tevo 
-	
-	vector<vector<string>> drawnTree(treeHeight, vector<string> (treeWidth)); //drawnTree[y][x] , kur y dideja zemyn
+
+	vector<vector<string>> drawnTree(treeHeight, vector<string>(treeWidth)); //drawnTree[y][x] , kur y dideja zemyn
 	for (int i = 0; i < treeHeight; i++)
 		for (int j = 0; j < treeWidth; j++)
 			drawnTree[i][j] = ".";
 	drawnTree[root->PosY][root->PosX] = to_string(root->Value);
-	
-	
+
+
 	root->Level = 0;
 	CalculateLevels(root);
 	if (root->LeftChild != null)
 		SetPositions(root->LeftChild, distanceFromParent, drawnTree);
 	if (root->RightChild != null)
 		SetPositions(root->RightChild, distanceFromParent, drawnTree);
-	
-	for (int i = 0; i < treeHeight; i++){
-		for (int j = 0; j < treeWidth; j++)
+	ofstream out("rez.txt");
+	for (int i = 0; i < treeHeight; i++) {
+		for (int j = 0; j < treeWidth; j++) {
 			cout << drawnTree[i][j];
+			out << drawnTree[i][j];
+		}
 		cout << endl;
+		out << endl;
 	}
+	out.close();
 }
 
 void SetPositions(Node *node, vector<int> distFromParent, vector<vector<string>> &drawnTree){
